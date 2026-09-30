@@ -1,0 +1,96 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Pocket Find: Lunch Rush</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="css/style.css">
+<div id="app">
+  <div id="scene" aria-label="Restaurant scene. Drag to pan, scroll or pinch to zoom, tap objects to find them."></div>
+
+  <header class="hud" id="hud">
+    <div class="brand">
+      <span class="eyebrow">Pocket Find</span>
+      <div class="title-row"><span class="lvl" id="lvlLabel">Level 1</span><h1 id="roomTitle">Lunch Rush</h1></div>
+    </div>
+    <div class="loc" id="locLabel">Fast-Food Counter</div>
+    <div class="hud-right">
+      <div class="progress" aria-live="polite">
+        <span><b id="foundCount">0</b> / <span id="totalCount">10</span> found</span>
+        <div class="bar"><i id="progressFill"></i></div>
+      </div>
+      <button class="round-btn" id="pauseBtn" aria-label="Pause">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1.5"/><rect x="14" y="5" width="4" height="14" rx="1.5"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <button class="nav-arrow left" id="navLeft" aria-label="Previous room">
+    <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <button class="nav-arrow right" id="navRight" aria-label="Next room">
+    <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+
+  <button class="round-btn cam-btn" id="resetCamBtn" aria-label="Reset camera view" title="Reset view">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+
+  <footer class="panel" id="panel">
+    <div class="cards" id="cards"></div>
+    <button class="hint-btn" id="hintBtn" aria-label="Use a hint">
+      <svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z" fill="#fff6d6" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+      <span>Hint</span>
+      <b class="badge" id="hintCount">3</b>
+    </button>
+  </footer>
+
+  <div id="fx"></div>
+  <div class="toast" id="toast" role="status" hidden></div>
+  <div class="rotate-note" id="rotateNote" hidden>Best played in landscape</div>
+
+  <div class="overlay" id="coach" hidden>
+    <div class="coach-card">
+      <div class="coach-step" id="coachStep">1 / 2</div>
+      <p id="coachText"></p>
+      <span class="coach-tap">Tap to continue</span>
+    </div>
+  </div>
+
+  <div class="overlay" id="pauseOverlay" hidden>
+    <div class="modal">
+      <h2>Paused</h2>
+      <div class="modal-btns">
+        <button class="btn primary" id="resumeBtn">Resume</button>
+        <button class="btn ghost" id="restartBtn">Restart level</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="completeOverlay" hidden>
+    <div class="modal complete">
+      <div class="burst" aria-hidden="true"></div>
+      <h2>LUNCH RUSH COMPLETE!</h2>
+      <p class="sub">All 10 orders are out of the kitchen.</p>
+      <div class="stats">
+        <div><span>Time spent</span><b id="statTime">0:00</b></div>
+        <div><span>Wrong clicks</span><b id="statWrong">0</b></div>
+        <div><span>Hints used</span><b id="statHints">0</b></div>
+      </div>
+      <button class="btn primary big" id="nextRoomBtn">Next Room</button>
+    </div>
+  </div>
+
+  <aside class="debug" id="debugPanel" hidden></aside>
+  <div id="labels"></div>
+</div>
+
+<script src="vendor/three.min.js"></script>
+<script src="js/data/items.js"></script>
+<script src="js/data/recipes.js"></script>
+<script src="js/data/rooms/lunch_rush.js"></script>
+<script src="js/models.js"></script>
+<script src="js/view3d.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/game.js"></script>
+<script src="js/main.js"></script>
+
+</body></html>
