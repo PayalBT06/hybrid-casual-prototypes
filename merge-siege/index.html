@@ -1,0 +1,1094 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Merge Siege</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap">
+<style>
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: #1d2a3a;
+    background-image: radial-gradient(circle at 50% 30%, #2c4058 0%, #1d2a3a 70%);
+    color: #fff;
+    font-family: "Fredoka", "Trebuchet MS", system-ui, sans-serif;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden; user-select: none; -webkit-user-select: none;
+    touch-action: none;
+  }
+  #stage {
+    position: relative;
+    width: min(100vw, calc(100dvh * 9 / 16));
+    aspect-ratio: 9 / 16;
+    max-height: 100dvh;
+    container-type: inline-size;
+    overflow: hidden;
+    border-radius: 2cqw;
+    box-shadow: 0 2cqw 8cqw rgba(0,0,0,.45);
+  }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+  .hud {
+    position: absolute; left: 0; right: 0; top: 0;
+    display: flex; align-items: center; gap: 2cqw;
+    padding: 2.4cqw 3cqw;
+    pointer-events: none;
+  }
+  .lvl {
+    background: rgba(20,30,48,.72); border-radius: 99cqw; padding: 1.2cqw 3.4cqw;
+    font-size: 3.6cqw; font-weight: 600; letter-spacing: .02em; white-space: nowrap;
+  }
+  .lvl b { color: #ffd257; font-weight: 700; }
+  .lvl.hard { background: #b3263b; }
+  .spacer { flex: 1; }
+  .chip {
+    background: rgba(20,30,48,.72); border-radius: 99cqw; padding: 1.2cqw 3cqw;
+    font-size: 3.4cqw; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums;
+  }
+  .chip.freeze { background: #2f8fd6; }
+  .hbtn {
+    pointer-events: auto; border: 0; cursor: pointer;
+    width: 9.5cqw; height: 9.5cqw; border-radius: 50%;
+    background: #fff; color: #24344b; font: 700 4.6cqw "Fredoka", sans-serif;
+    box-shadow: 0 .8cqw 0 #b9c6d6;
+    display: grid; place-items: center;
+  }
+  .hbtn:active { transform: translateY(.6cqw); box-shadow: 0 .2cqw 0 #b9c6d6; }
+  .hbtn:focus-visible, .btn:focus-visible, .lchip:focus-visible { outline: .8cqw solid #ffd257; outline-offset: .6cqw; }
+
+  .tip {
+    position: absolute; left: 50%; top: 40%; transform: translateX(-50%);
+    width: 84%; text-align: center;
+    background: rgba(255,255,255,.94); color: #24344b;
+    border-radius: 4cqw; padding: 2.6cqw 4cqw;
+    font-size: 3.9cqw; font-weight: 600; line-height: 1.25;
+    box-shadow: 0 1.2cqw 0 rgba(0,0,0,.18);
+    pointer-events: none;
+    transition: opacity .3s;
+  }
+  .tip small { display: block; font-size: 3cqw; color: #6a7d96; font-weight: 500; margin-top: .8cqw; }
+
+  .overlay {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    background: rgba(14,22,36,.62); backdrop-filter: blur(2px);
+  }
+  .card {
+    width: 80%; background: #fff; color: #24344b; border-radius: 6cqw;
+    padding: 6cqw 5cqw 5cqw; text-align: center;
+    box-shadow: 0 2cqw 0 rgba(0,0,0,.2);
+    animation: pop .35s cubic-bezier(.2,1.6,.4,1);
+  }
+  @keyframes pop { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .card h2 { margin: 0 0 1cqw; font-size: 8cqw; line-height: 1; letter-spacing: .01em; text-wrap: balance; }
+  .card h2.win { color: #2aa55a; }
+  .card h2.lose { color: #d8364a; }
+  .card p { margin: 1.5cqw 0 4cqw; font-size: 3.8cqw; color: #56698a; line-height: 1.35; }
+  .stars { font-size: 10cqw; letter-spacing: 1cqw; color: #ffc933; margin: 1cqw 0 2cqw; }
+  .stars .off { color: #dfe5ee; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2cqw; margin: 0 0 5cqw; }
+  .stats div { background: #f1f5fa; border-radius: 3cqw; padding: 2cqw 1cqw; font-size: 3cqw; color: #6a7d96; }
+  .stats b { display: block; font-size: 5.4cqw; color: #24344b; font-variant-numeric: tabular-nums; }
+  .btns { display: grid; gap: 2.6cqw; }
+  .btn {
+    border: 0; cursor: pointer; border-radius: 4cqw; padding: 3.4cqw 4cqw;
+    font: 700 4.6cqw "Fredoka", sans-serif; letter-spacing: .02em;
+    background: #3ecf6e; color: #fff; box-shadow: 0 1.2cqw 0 #28995050;
+    box-shadow: 0 1.2cqw 0 #2a9a52;
+  }
+  .btn:active { transform: translateY(.8cqw); box-shadow: 0 .4cqw 0 #2a9a52; }
+  .btn.ad { background: #ffb020; box-shadow: 0 1.2cqw 0 #c98400; }
+  .btn.ad::before { content: "AD"; font-size: 2.8cqw; background: rgba(0,0,0,.2); border-radius: 1.4cqw; padding: .4cqw 1.4cqw; margin-right: 2cqw; vertical-align: middle; }
+  .btn.ghost { background: #e8eef5; color: #56698a; box-shadow: 0 1.2cqw 0 #c7d2df; }
+  .btn[disabled] { opacity: .45; pointer-events: none; }
+
+  .title h1 {
+    margin: 0; font-size: 13cqw; line-height: .9; color: #ff5a5f;
+    text-shadow: 0 1.2cqw 0 #a82c3a; letter-spacing: .01em;
+  }
+  .title h1 span { color: #3d8bff; text-shadow: 0 1.2cqw 0 #1f55a8; }
+  .title .sub { font-size: 3.6cqw; color: #56698a; margin: 3cqw 0 5cqw; }
+  .levels { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2.4cqw; margin-bottom: 5cqw; }
+  .lchip {
+    border: 0; cursor: pointer; aspect-ratio: 1; border-radius: 3.6cqw;
+    background: #3d8bff; color: #fff; font: 700 5.4cqw "Fredoka", sans-serif;
+    box-shadow: 0 1cqw 0 #1f55a8; display: grid; place-items: center; line-height: 1;
+    padding: 0;
+  }
+  .lchip small { display: block; font-size: 2.6cqw; color: #ffd257; letter-spacing: .1em; margin-top: .6cqw; }
+  .lchip.hard { background: #d8364a; box-shadow: 0 1cqw 0 #8e1f2d; }
+  .lchip.locked { background: #cfd8e3; box-shadow: 0 1cqw 0 #a9b5c4; color: #8d9bb0; cursor: default; }
+  .lchip.current { outline: .8cqw solid #ffc933; outline-offset: .5cqw; }
+
+  #debug {
+    position: absolute; right: 2cqw; top: 14cqw; width: 50%;
+    background: rgba(10,16,28,.88); color: #bfe3ff;
+    font: 500 2.6cqw ui-monospace, Menlo, Consolas, monospace; line-height: 1.4;
+    border-radius: 2cqw; padding: 2cqw 2.4cqw; white-space: pre-wrap;
+  }
+  #debug button { font: inherit; margin-top: 1.4cqw; border: 0; border-radius: 1cqw; padding: 1cqw 2cqw; cursor: pointer; background: #ffd257; color: #24344b; }
+  @media (prefers-reduced-motion: reduce) { .card { animation: none; } }
+</style>
+<div id="stage">
+  <canvas id="cv" width="540" height="960"></canvas>
+
+  <div class="hud">
+    <div class="lvl" id="hudLevel">Level 1</div>
+    <div class="chip freeze" id="hudFreeze" hidden>Frozen 3</div>
+    <div class="spacer"></div>
+    <div class="chip" id="hudPerfect">Perfect 0</div>
+    <button class="hbtn" id="btnRestart" aria-label="Restart level" title="Restart">&#8635;</button>
+    <button class="hbtn" id="btnMenu" aria-label="Level select" title="Levels">&#9776;</button>
+  </div>
+
+  <div class="tip" id="tip" hidden></div>
+
+  <div class="overlay" id="ovTitle">
+    <div class="card title">
+      <h1>MERGE<br><span>SIEGE</span></h1>
+      <div class="sub">Merge jellies. Match colors. Hold the wall.</div>
+      <div class="levels" id="levelGrid"></div>
+      <div class="btns"><button class="btn" id="btnPlay">PLAY</button></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="ovResult" hidden>
+    <div class="card" id="resultCard"></div>
+  </div>
+
+  <div id="debug" hidden></div>
+</div>
+
+<script>
+"use strict";
+/* =====================================================================
+   MERGE SIEGE  -  turn-based lane merge prototype
+   Every action advances the enemies one step, except:
+     - an EXACT kill (damage lands on exactly 0 overflow)  -> free action
+     - boosters                                             -> free action
+   Level data is at the top. Logic is pure (works on a state object) so
+   the debug bot can simulate thousands of playouts for difficulty tuning.
+   ===================================================================== */
+
+// ---------------------------------------------------------------- DATA
+const COLORS = {
+  R: { name: "RED",    fill: "#ff5a5f", dark: "#c22f3f", light: "#ffb3b0" },
+  B: { name: "BLUE",   fill: "#3d8bff", dark: "#1f55b8", light: "#a9ccff" },
+  G: { name: "GREEN",  fill: "#3ecf6e", dark: "#1f8f45", light: "#b5f2c7" },
+  Y: { name: "YELLOW", fill: "#ffc933", dark: "#c98a00", light: "#fff0b0" },
+  W: { name: "RAINBOW",fill: "#ffffff", dark: "#8a6bd1", light: "#ffffff" },
+};
+
+/* Lane strings: tokens from the wall outward. "_" is an empty row.
+   Enemy token: <color><hp>[A<armor>][B]   e.g. R25, B50A40 (armored), R150B (boss, moves every 2nd step)
+   Queue tokens: <color><value>, W = rainbow jelly (matches any color).
+   The first 9 queue entries fill the grid. */
+const LEVELS = [
+  { name: "First Contact",
+    tip: "Drag a jelly onto a lane whose front enemy has the same color.",
+    tip2: "Exact kills are FREE. Enemies only step forward when you waste damage.",
+    lanes: ["_ _ _ _ _ R25 R25", "_ _ _ _ _ _ B25", "_ _ _ _ _ _ B25 B25", "_ _ _ _ _ R25"],
+    queue: "R25 B25 R25 B25 R25 B25 G15 Y15 B10 R10 G10 Y10" },
+
+  { name: "Stronger Together",
+    tip: "Drop a jelly onto another of the same color to merge. Numbers add up.",
+    tip2: "Every merge costs one step. Plan them.",
+    lanes: ["_ _ _ _ _ _ _ R50", "_ _ _ _ _ _ _ _ B50", "_ _ _ _ _ _ _ _ G50", "_ _ _ _ _ _ _ Y60"],
+    queue: "R25 B25 G25 R25 B25 G25 Y30 Y15 Y15 R10 B10 G10 Y20 R15" },
+
+  { name: "Pierce",
+    tip: "Leftover damage pierces into the next enemy of the same color.",
+    tip2: "One big merge can clear a whole lane for free.",
+    lanes: ["_ _ _ _ R25 R25 R25", "_ _ _ _ _ B20 B20", "_ _ _ _ _ G30 G30 G30", "_ _ _ _ _ Y40"],
+    queue: "R30 R45 B15 B25 G40 G50 Y25 Y15 G10 R10 B10 Y10 R20 G20" },
+
+  { name: "Bench Press",
+    tip: "Park a jelly on the bench to free a grid cell. The bench has 3 slots.",
+    tip2: "A full bench and a stuck grid means game over.",
+    lanes: ["_ _ _ _ B25 R25 B25", "_ _ _ _ _ Y30 G30", "_ _ _ _ R40 R40", "_ _ _ _ _ G25 Y25 G25"],
+    queue: "B25 G20 Y30 R20 R20 Y10 G10 B15 Y15 R40 B10 G25 R15 G30 Y25 B25 R10 Y20 G15" },
+
+  { name: "Crowd Control",
+    tip: "Four busy lanes. Look for chains of the same color.",
+    lanes: ["_ _ _ _ _ R20 R20 B30 B30", "_ _ _ _ _ _ G45 G15", "_ _ _ _ _ Y25 Y25 Y25 R35", "_ _ _ _ _ _ B40 G20 G20"],
+    queue: "R15 G30 Y40 B25 R25 G15 Y35 B15 G40 B30 R35 Y10 B30 G20 R10 Y15 B20 G10 R20 Y20 B10" },
+
+  { name: "Rainbow",
+    tip: "Rainbow jellies match any color. Merge them into anything.",
+    lanes: ["_ _ _ _ _ _ _ _ G35 G35 R30", "_ _ _ _ _ _ _ B55 Y20", "_ _ _ _ _ _ _ _ R25 R25 R25 R25", "_ _ _ _ _ _ _ Y45 B35"],
+    queue: "W20 G30 R40 B35 Y25 R35 G20 W15 Y20 B20 R25 Y30 G20 B25 R30 W10 Y10 G15 B10 R10" },
+
+  { name: "Iron Guards", hard: true,
+    tip: "Armored enemies ignore hits below their armor number.",
+    tip2: "HARD LEVEL",
+    lanes: ["_ _ _ _ _ _ R60A40 R20", "_ _ _ _ _ B30 B30 G50A50", "_ _ _ _ _ _ _ Y70A50", "_ _ _ _ _ G25 G25 R40A30"],
+    queue: "R30 B20 Y35 G25 R25 B40 G20 Y20 R15 G30 Y15 B10 G25 R25 Y20 G20 B15 R25 G15 Y10 R20" },
+
+  { name: "Big Red", hard: true, boss: true,
+    tip: "BOSS. Big Red moves every second step. Clear the escorts, then go big.",
+    tip2: "SUPER HARD",
+    lanes: ["_ _ _ _ B35 B25 Y30", "_ _ _ _ _ R150B", "_ _ _ Y40 G25 G25", "_ _ _ _ G45 B20 B20"],
+    queue: "R45 B20 Y30 R40 G25 B15 Y25 G20 R35 B25 G25 Y15 R30 G25 B20 Y10 B20 G10 R20 Y20 B10 G20 R25 Y15" },
+];
+
+const TRACK = 10;        // visible rows between spawn and the wall
+const GRID_N = 9;
+const BENCH_N = 3;
+const START_BOOSTERS = { freeze: 1, hammer: 1 };
+
+// ---------------------------------------------------------------- PURE LOGIC
+let uid = 1;
+function parseJelly(tok) {
+  const m = /^([RGBYW])(\d+)$/.exec(tok);
+  if (!m) throw new Error("bad jelly token " + tok);
+  return { id: uid++, color: m[1], value: +m[2] };
+}
+function parseLane(str, laneIdx) {
+  const out = [];
+  const toks = str.trim() ? str.trim().split(/\s+/) : [];
+  toks.forEach((tok, i) => {
+    if (tok === "_") return;
+    const m = /^([RGBY])(\d+)(?:A(\d+))?(B)?$/.exec(tok);
+    if (!m) throw new Error("bad enemy token " + tok);
+    out.push({ id: uid++, lane: laneIdx, color: m[1], hp: +m[2], maxHp: +m[2],
+      armor: m[3] ? +m[3] : 0, boss: !!m[4], slow: !!m[4], tick: 0, dist: i + 1 });
+  });
+  return out;
+}
+function newState(levelIdx) {
+  const L = LEVELS[levelIdx];
+  const s = {
+    levelIdx, lanes: L.lanes.map(parseLane),
+    queue: L.queue.trim().split(/\s+/).map(parseJelly), qpos: 0,
+    grid: new Array(GRID_N).fill(null), bench: new Array(BENCH_N).fill(null),
+    steps: 0, actions: 0, perfects: 0, freeze: 0,
+    boosters: { ...START_BOOSTERS }, boostersUsed: 0, revives: 0,
+    status: "play", reason: null,
+  };
+  refill(s);
+  return s;
+}
+function clone(s) { return JSON.parse(JSON.stringify(s)); }
+function refill(s) {
+  for (let i = 0; i < GRID_N; i++) {
+    if (!s.grid[i] && s.qpos < s.queue.length) s.grid[i] = s.queue[s.qpos++];
+  }
+}
+function getJ(s, ref) { return ref.zone === "grid" ? s.grid[ref.i] : s.bench[ref.i]; }
+function setJ(s, ref, v) { if (ref.zone === "grid") s.grid[ref.i] = v; else s.bench[ref.i] = v; }
+function enemiesLeft(s) { return s.lanes.reduce((n, l) => n + l.length, 0); }
+
+function validate(s, a) {
+  if (s.status !== "play") return { ok: false, reason: "" };
+  if (a.type === "freeze") return s.boosters.freeze > 0 ? { ok: true } : { ok: false, reason: "No Freeze left" };
+  if (a.type === "hammer") {
+    if (s.boosters.hammer <= 0) return { ok: false, reason: "No Hammer left" };
+    return s.lanes[a.lane] && s.lanes[a.lane].length ? { ok: true } : { ok: false, reason: "Empty lane" };
+  }
+  const j = getJ(s, a.src);
+  if (!j) return { ok: false, reason: "" };
+  if (a.type === "fire") {
+    const lane = s.lanes[a.lane];
+    if (!lane || !lane.length) return { ok: false, reason: "Empty lane" };
+    const f = lane[0];
+    if (j.color !== "W" && j.color !== f.color) return { ok: false, reason: "Needs " + COLORS[f.color].name };
+    if (f.armor && j.value < f.armor) return { ok: false, reason: "Armor " + f.armor + "!" };
+    return { ok: true };
+  }
+  if (a.type === "merge") {
+    if (a.dst.zone === a.src.zone && a.dst.i === a.src.i) return { ok: false, reason: "" };
+    const d = getJ(s, a.dst);
+    if (!d) return { ok: false, reason: "" };
+    if (j.color !== "W" && d.color !== "W" && j.color !== d.color) return { ok: false, reason: "Colors differ" };
+    return { ok: true };
+  }
+  if (a.type === "park") {
+    if (a.src.zone !== "grid") return { ok: false, reason: "" };
+    if (s.bench[a.slot]) return { ok: false, reason: "Slot taken" };
+    if (a.slot >= s.bench.length) return { ok: false, reason: "" };
+    return { ok: true };
+  }
+  return { ok: false, reason: "?" };
+}
+
+function advance(s) {
+  if (s.freeze > 0) { s.freeze--; return { frozen: true }; }
+  for (const lane of s.lanes) {
+    lane.forEach((e, i) => {
+      let nd = e.dist - 1;
+      if (e.slow) { e.tick ^= 1; if (!e.tick) nd = e.dist; }
+      if (i > 0) nd = Math.max(nd, lane[i - 1].dist + 1);
+      e.dist = nd;
+    });
+  }
+  return { frozen: false };
+}
+
+function listActions(s, withBoosters) {
+  const acts = [];
+  const refs = [];
+  for (let i = 0; i < GRID_N; i++) if (s.grid[i]) refs.push({ zone: "grid", i });
+  for (let i = 0; i < s.bench.length; i++) if (s.bench[i]) refs.push({ zone: "bench", i });
+  for (const r of refs) {
+    for (let l = 0; l < s.lanes.length; l++) { const a = { type: "fire", src: r, lane: l }; if (validate(s, a).ok) acts.push(a); }
+    for (const d of refs) { const a = { type: "merge", src: r, dst: d }; if (validate(s, a).ok) acts.push(a); }
+    if (r.zone === "grid") {
+      const slot = s.bench.findIndex(b => !b);
+      if (slot >= 0) acts.push({ type: "park", src: r, slot });
+    }
+  }
+  if (withBoosters) {
+    if (s.boosters.freeze > 0) acts.push({ type: "freeze" });
+    if (s.boosters.hammer > 0) for (let l = 0; l < s.lanes.length; l++) if (s.lanes[l].length) acts.push({ type: "hammer", lane: l });
+  }
+  return acts;
+}
+
+/* Applies an action. Returns an event object describing what happened (for animation). */
+function apply(s, a) {
+  const v = validate(s, a);
+  if (!v.ok) return { ok: false, reason: v.reason };
+  const ev = { ok: true, type: a.type, free: false, hits: [], kills: [], overflow: 0, exact: false };
+  s.actions++;
+  if (a.type === "freeze") { s.boosters.freeze--; s.boostersUsed++; s.freeze += 3; ev.free = true; }
+  else if (a.type === "hammer") {
+    s.boosters.hammer--; s.boostersUsed++;
+    const e = s.lanes[a.lane].shift(); ev.kills.push({ ...e }); ev.lane = a.lane; ev.free = true;
+  }
+  else {
+    const j = getJ(s, a.src);
+    ev.jelly = { ...j };
+    setJ(s, a.src, null);
+    if (a.type === "fire") {
+      ev.lane = a.lane;
+      const lane = s.lanes[a.lane];
+      let val = j.value; const hitColor = j.color === "W" ? lane[0].color : j.color;
+      let lastKilled = false;
+      while (val > 0 && lane.length) {
+        const e = lane[0];
+        if (e.color !== hitColor) break;
+        if (e.armor && val < e.armor) break;
+        const dmg = Math.min(val, e.hp);
+        e.hp -= dmg; val -= dmg;
+        ev.hits.push({ id: e.id, dmg, lane: a.lane, dist: e.dist });
+        if (e.hp <= 0) { ev.kills.push({ ...e }); lane.shift(); lastKilled = true; }
+        else { lastKilled = false; break; }
+      }
+      ev.overflow = val;
+      ev.exact = val === 0 && lastKilled;
+      if (ev.exact) { ev.free = true; s.perfects++; }
+    } else if (a.type === "merge") {
+      const d = getJ(s, a.dst);
+      d.value += j.value;
+      if (d.color === "W") d.color = j.color;
+      ev.result = { ...d };
+    } else if (a.type === "park") {
+      s.bench[a.slot] = j;
+    }
+    refill(s);
+  }
+  if (enemiesLeft(s) === 0) { s.status = "won"; return ev; }
+  if (!ev.free) {
+    s.steps++;
+    const r = advance(s); ev.frozen = r.frozen;
+    if (s.lanes.some(l => l.length && l[0].dist <= 0)) { s.status = "lost"; s.reason = "breach"; return ev; }
+  }
+  if (!listActions(s, false).length) {
+    if (s.boosters.hammer > 0) ev.stuckWithBooster = true;
+    else {
+      const anyJ = s.grid.some(Boolean) || s.bench.some(Boolean);
+      s.status = "lost"; s.reason = anyJ ? "stuck" : "empty";
+    }
+  }
+  return ev;
+}
+
+function revive(s) {
+  s.revives++;
+  if (s.reason === "breach") { for (const l of s.lanes) for (const e of l) e.dist += 3; }
+  else {
+    // stuck / out of jellies: extra bench slot plus two rainbow jellies
+    s.bench.push(null);
+    s.queue.splice(s.qpos, 0, { id: uid++, color: "W", value: 25 }, { id: uid++, color: "W", value: 25 });
+    refill(s);
+    for (let i = 0; i < s.bench.length && s.qpos < s.queue.length; i++) if (!s.bench[i]) s.bench[i] = s.queue[s.qpos++];
+  }
+  s.status = "play"; s.reason = null;
+}
+
+// ---------------------------------------------------------------- BOT (difficulty tuning)
+function botPlayout(levelIdx, rng) {
+  const s = newState(levelIdx);
+  let guard = 200;
+  while (s.status === "play" && guard--) {
+    const acts = listActions(s, false);
+    if (!acts.length) break;
+    const w = acts.map(a => {
+      if (a.type === "fire") {
+        const t = clone(s); const e = apply(t, a);
+        return e.exact ? 12 : (e.kills.length ? 4 : 1.5);
+      }
+      if (a.type === "merge") return 2;
+      return 0.6;
+    });
+    let r = rng() * w.reduce((x, y) => x + y, 0), k = 0;
+    while (r > w[k]) { r -= w[k]; k++; }
+    apply(s, acts[Math.min(k, acts.length - 1)]);
+  }
+  return s.status === "won";
+}
+function solve(levelIdx, beam = 250) {
+  // Beam search over whole actions (no boosters). "win found" is a real proof of solvability;
+  // "no win found" means the search did not find one, so treat it as a strong warning, not proof.
+  const key = s => JSON.stringify([s.grid.map(j => j && j.color + j.value), s.bench.map(j => j && j.color + j.value), s.qpos,
+    s.lanes.map(l => l.map(e => e.color + e.hp + ":" + e.dist + e.tick)), s.freeze]);
+  const score = s => {
+    let hp = 0, danger = 0;
+    for (const l of s.lanes) { for (const e of l) hp += e.hp; if (l.length) danger += Math.max(0, 6 - l[0].dist) ** 2; }
+    const t = exactTargets(s); let match = 0;
+    for (const j of [...s.grid, ...s.bench]) if (j && t.has(j.color + j.value)) match++;
+    return -hp - danger * 6 + match * 25;
+  };
+  let layer = [newState(levelIdx)], nodes = 0;
+  for (let depth = 0; depth < 80 && layer.length; depth++) {
+    const next = new Map();
+    for (const st of layer) for (const a of listActions(st, false)) {
+      const t = clone(st); apply(t, a); nodes++;
+      if (t.status === "won") return { solvable: true, nodes, depth: depth + 1 };
+      if (t.status !== "play") continue;
+      const k = key(t); if (!next.has(k)) next.set(k, t);
+    }
+    layer = [...next.values()].map(t => [score(t), t]).sort((a, b) => b[0] - a[0]).slice(0, beam).map(x => x[1]);
+  }
+  return { solvable: false, nodes };
+}
+function exactTargets(s) {
+  // values that would kill a same-color run at the front of a lane with zero overflow
+  const set = new Set();
+  for (const lane of s.lanes) {
+    let sum = 0;
+    for (const e of lane) { if (e.color !== lane[0].color) break; sum += e.hp; set.add(e.color + sum); }
+  }
+  return set;
+}
+function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function botWinRate(levelIdx, n = 400) { const rng = mulberry(1234 + levelIdx); let w = 0; for (let i = 0; i < n; i++) if (botPlayout(levelIdx, rng)) w++; return w / n; }
+
+// ---------------------------------------------------------------- VIEW / LAYOUT
+const W = 540, H = 960;
+const FAR_Y = 118, NEAR_Y = 588, WALL_Y = 600;
+const NEAR_HALF = 256, FAR_HALF = 150, PERSP = 1.0;
+const BENCH_Y = 662, BENCH_X = [196, 270, 344, 418];
+const GRID_Y = [760, 840, 920], GRID_X = [160, 270, 380];
+const BOOST = { freeze: { x: 52, y: 662 }, hammer: { x: 114, y: 662 } };
+const QUEUE_X = 478;
+
+const cv = document.getElementById("cv");
+const ctx = cv.getContext("2d");
+function resizeCanvas() {
+  const r = cv.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+  cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr);
+}
+function persp(dist) { const t = Math.max(0, Math.min(1.25, dist / TRACK)); return t * (1 + PERSP) / (1 + PERSP * t); }
+function laneGeom(lane, dist) {
+  const p = persp(dist);
+  const y = NEAR_Y - (NEAR_Y - FAR_Y) * p;
+  const half = NEAR_HALF + (FAR_HALF - NEAR_HALF) * p;
+  const lw = 2 * half / 4;
+  return { x: W / 2 - half + lw * (lane + 0.5), y, s: 1 - 0.4 * p, half, lw };
+}
+function laneAt(x, y) {
+  if (y > WALL_Y + 20 || y < FAR_Y - 60) return -1;
+  const p = Math.max(0, Math.min(1, (NEAR_Y - y) / (NEAR_Y - FAR_Y)));
+  const half = NEAR_HALF + (FAR_HALF - NEAR_HALF) * p;
+  const l = Math.floor((x - (W / 2 - half)) / (2 * half / 4));
+  return l >= 0 && l < 4 ? l : -1;
+}
+function refPos(ref) {
+  if (ref.zone === "grid") return { x: GRID_X[ref.i % 3], y: GRID_Y[Math.floor(ref.i / 3)], r: 33 };
+  return { x: BENCH_X[ref.i], y: BENCH_Y, r: 26 };
+}
+
+// ---------------------------------------------------------------- GAME RUNTIME
+let S = null;            // live state
+let progress = { unlocked: 1, stars: {} };
+try { const p = JSON.parse(localStorage.getItem("mergeSiege.progress") || "null"); if (p) progress = p; } catch (e) {}
+function saveProgress() { try { localStorage.setItem("mergeSiege.progress", JSON.stringify(progress)); } catch (e) {} }
+
+const view = {
+  rd: new Map(),       // enemy id -> render dist
+  disp: new Map(),     // enemy id -> displayed hp
+  ghosts: [],          // dying enemies {e, until}
+  particles: [], texts: [], shots: [],
+  squish: new Map(),   // jelly id -> time
+  shake: new Map(),    // jelly id -> time
+  holdUntil: 0, busyUntil: 0,
+  drag: null, sel: null, hammerArmed: false,
+  debug: false, time: 0, tipShownAt: 0, wallFlash: 0,
+};
+
+function startLevel(i) {
+  S = newState(i);
+  view.rd.clear(); view.disp.clear(); view.ghosts = []; view.particles = []; view.texts = []; view.shots = [];
+  view.sel = null; view.drag = null; view.hammerArmed = false;
+  for (const l of S.lanes) for (const e of l) { view.rd.set(e.id, e.dist + 4); view.disp.set(e.id, e.hp); }
+  const L = LEVELS[i];
+  const lv = document.getElementById("hudLevel");
+  lv.innerHTML = `Level ${i + 1} <b>${L.hard ? (L.boss ? "BOSS" : "HARD") : ""}</b>`;
+  lv.classList.toggle("hard", !!L.hard);
+  showTip(L.tip, L.tip2 && !L.hard ? L.tip2 : "");
+  document.getElementById("ovResult").hidden = true;
+  document.getElementById("ovTitle").hidden = true;
+  updateHud();
+}
+function showTip(text, small) {
+  const t = document.getElementById("tip");
+  t.innerHTML = text + (small ? `<small>${small}</small>` : "");
+  t.hidden = false; t.style.opacity = 1; view.tipShownAt = performance.now();
+}
+function hideTip() { const t = document.getElementById("tip"); t.style.opacity = 0; setTimeout(() => (t.hidden = true), 300); }
+function updateHud() {
+  document.getElementById("hudPerfect").textContent = "Perfect " + S.perfects;
+  const f = document.getElementById("hudFreeze");
+  f.hidden = !S.freeze; f.textContent = "Frozen " + S.freeze;
+}
+
+function now() { return performance.now(); }
+function float(x, y, text, color, size = 26, life = 900) { view.texts.push({ x, y, text, color, size, t0: now(), life }); }
+function burst(x, y, color, n = 16, spread = 1) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, sp = (2 + Math.random() * 5) * spread;
+    view.particles.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 3, life: 500 + Math.random() * 400, t0: now(), color, size: 4 + Math.random() * 6 });
+  }
+}
+
+function doAction(a) {
+  if (now() < view.busyUntil) return;
+  const pre = clone(S);
+  const srcPos = a.src ? refPos(a.src) : null;
+  const ev = apply(S, a);
+  if (!ev.ok) {
+    if (ev.reason) {
+      const p = a.src ? refPos(a.src) : { x: W / 2, y: 400 };
+      float(p.x, p.y - 40, ev.reason, "#ff6b6b", 22);
+      const j = a.src && getJ(S, a.src); if (j) view.shake.set(j.id, now());
+    }
+    return;
+  }
+  hideTip();
+  const t = now();
+  if (a.type === "fire") {
+    const front = pre.lanes[a.lane][0];
+    const g = laneGeom(a.lane, view.rd.get(front.id) ?? front.dist);
+    const col = ev.jelly.color === "W" ? front.color : ev.jelly.color;
+    view.shots.push({ from: srcPos, to: { x: g.x, y: g.y - 30 * g.s }, t0: t, dur: 260, color: col, value: ev.jelly.value, jcolor: ev.jelly.color });
+    view.busyUntil = t + 280; view.holdUntil = t + 420;
+    // keep killed enemies visible until impact
+    ev.kills.forEach((e, k) => view.ghosts.push({ e, until: t + 260 + k * 90, rd: view.rd.get(e.id) ?? e.dist }));
+    setTimeout(() => {
+      ev.hits.forEach((h, k) => setTimeout(() => {
+        const rd = view.rd.get(h.id) ?? h.dist; const gg = laneGeom(h.lane, rd);
+        view.disp.set(h.id, Math.max(0, (view.disp.get(h.id) ?? 0) - h.dmg));
+        burst(gg.x, gg.y - 30 * gg.s, COLORS[col].fill, 14, gg.s);
+        float(gg.x, gg.y - 70 * gg.s, "-" + h.dmg, "#fff", 24 * Math.max(.7, gg.s));
+      }, k * 90));
+      const last = ev.hits.length ? (ev.hits.length - 1) * 90 : 0;
+      setTimeout(() => {
+        if (ev.exact) { float(W / 2, 360, "PERFECT!", "#ffd257", 46, 1100); float(W / 2, 404, "free move", "#ffffff", 22, 1100); }
+        else if (ev.overflow > 0) { const gg = laneGeom(a.lane, 1.5); float(gg.x, gg.y - 70, "wasted " + ev.overflow, "#ffb3b0", 20); }
+        if (ev.kills.length >= 2) float(W / 2, 300, ev.kills.length + "x PIERCE", "#b5f2c7", 34, 1000);
+      }, last + 40);
+    }, 260);
+  } else if (a.type === "merge") {
+    const dp = refPos(a.dst);
+    view.shots.push({ from: srcPos, to: dp, t0: t, dur: 180, color: ev.jelly.color, value: ev.jelly.value, jcolor: ev.jelly.color, merge: true });
+    view.busyUntil = t + 200; view.holdUntil = t + 260;
+    setTimeout(() => { burst(dp.x, dp.y, ev.result.color === "W" ? "#fff" : COLORS[ev.result.color].fill, 18); view.squish.set(ev.result.id, now()); float(dp.x, dp.y - 50, "= " + ev.result.value, "#fff", 26); }, 180);
+  } else if (a.type === "park") {
+    view.shots.push({ from: srcPos, to: refPos({ zone: "bench", i: a.slot }), t0: t, dur: 160, color: ev.jelly.color, value: ev.jelly.value, jcolor: ev.jelly.color, merge: true });
+    view.busyUntil = t + 170; view.holdUntil = t + 200;
+  } else if (a.type === "hammer") {
+    const e = ev.kills[0]; const g = laneGeom(a.lane, view.rd.get(e.id) ?? e.dist);
+    view.ghosts.push({ e, until: t + 150, rd: view.rd.get(e.id) ?? e.dist });
+    setTimeout(() => { burst(g.x, g.y - 30 * g.s, "#d9d2c3", 26, 1.4); float(g.x, g.y - 80 * g.s, "SMASH!", "#fff", 32); }, 150);
+    view.busyUntil = t + 200;
+  } else if (a.type === "freeze") {
+    float(W / 2, 360, "FROZEN x3", "#a9ccff", 42, 1100);
+    for (const l of S.lanes) for (const e of l) { const g = laneGeom(e.lane, e.dist); burst(g.x, g.y - 20, "#dff0ff", 8, .7); }
+  }
+  if (!ev.free && ev.frozen) setTimeout(() => float(W / 2, 460, "frozen: no step", "#a9ccff", 20), 300);
+  if (ev.stuckWithBooster) setTimeout(() => showTip("No moves left. Use the Hammer."), 400);
+  view.sel = null; view.hammerArmed = false;
+  updateHud();
+  if (S.status !== "play") setTimeout(showResult, S.status === "won" ? 900 : 700);
+  if (S.status === "lost" && S.reason === "breach") view.wallFlash = now();
+}
+
+function starsFor(s) { return s.revives ? 1 : (s.boostersUsed ? 2 : 3); }
+function showResult() {
+  const card = document.getElementById("resultCard");
+  const L = LEVELS[S.levelIdx];
+  if (S.status === "won") {
+    const st = starsFor(S);
+    const key = S.levelIdx;
+    progress.stars[key] = Math.max(progress.stars[key] || 0, st);
+    progress.unlocked = Math.max(progress.unlocked, Math.min(LEVELS.length, S.levelIdx + 2));
+    saveProgress();
+    const last = S.levelIdx >= LEVELS.length - 1;
+    card.innerHTML = `
+      <h2 class="win">${L.boss ? "BOSS DOWN!" : "WALL HELD!"}</h2>
+      <div class="stars">${[1,2,3].map(i => `<span class="${i <= st ? "" : "off"}">&#9733;</span>`).join("")}</div>
+      <div class="stats">
+        <div><b>${S.steps}</b>steps taken</div>
+        <div><b>${S.perfects}</b>perfect kills</div>
+        <div><b>${S.actions}</b>actions</div>
+      </div>
+      <div class="btns">
+        ${last ? `<button class="btn" id="rNext">PLAY AGAIN</button>` : `<button class="btn" id="rNext">NEXT LEVEL</button>`}
+        <button class="btn ghost" id="rMenu">Levels</button>
+      </div>`;
+    card.querySelector("#rNext").onclick = () => startLevel(last ? 0 : S.levelIdx + 1);
+    card.querySelector("#rMenu").onclick = openTitle;
+  } else {
+    const msg = { breach: ["WALL BREACHED", "An enemy reached your wall."],
+                  stuck: ["NO MOVES", "Your grid and bench are jammed."],
+                  empty: ["OUT OF JELLIES", "You ran out of jellies before the enemies ran out."] }[S.reason];
+    const reviveLabel = S.reason === "breach" ? "Push enemies back 3" : "+1 bench slot, 2 rainbow jellies";
+    card.innerHTML = `
+      <h2 class="lose">${msg[0]}</h2>
+      <p>${msg[1]}<br>${enemiesLeft(S)} enemies left.</p>
+      <div class="btns">
+        <button class="btn ad" id="rRevive" ${S.revives ? "disabled" : ""}>${reviveLabel}</button>
+        <button class="btn" id="rRetry">RETRY</button>
+        <button class="btn ghost" id="rMenu">Levels</button>
+      </div>`;
+    card.querySelector("#rRevive").onclick = () => {
+      revive(S);
+      for (const l of S.lanes) for (const e of l) view.disp.set(e.id, e.hp);
+      document.getElementById("ovResult").hidden = true;
+      float(W / 2, 380, "REVIVED", "#ffd257", 42, 1000);
+    };
+    card.querySelector("#rRetry").onclick = () => startLevel(S.levelIdx);
+    card.querySelector("#rMenu").onclick = openTitle;
+  }
+  document.getElementById("ovResult").hidden = false;
+}
+
+function openTitle() {
+  const g = document.getElementById("levelGrid");
+  const cur = Math.min(progress.unlocked, LEVELS.length) - 1;
+  g.innerHTML = LEVELS.map((L, i) => {
+    const locked = i >= progress.unlocked;
+    const st = progress.stars[i] || 0;
+    const cls = ["lchip", L.hard ? "hard" : "", locked ? "locked" : "", i === cur ? "current" : ""].join(" ");
+    return `<button class="${cls}" data-i="${i}" ${locked ? "aria-disabled=true" : ""} aria-label="Level ${i + 1}${L.hard ? " hard" : ""}">
+      <span>${i + 1}<small>${locked ? "&#128274;" : "&#9733;".repeat(st) || (L.boss ? "BOSS" : L.hard ? "HARD" : "&nbsp;")}</small></span></button>`;
+  }).join("");
+  g.querySelectorAll(".lchip").forEach(b => b.onclick = () => { const i = +b.dataset.i; if (i < progress.unlocked) startLevel(i); });
+  document.getElementById("btnPlay").onclick = () => startLevel(cur);
+  document.getElementById("ovResult").hidden = true;
+  document.getElementById("ovTitle").hidden = false;
+}
+
+// ---------------------------------------------------------------- INPUT
+function toLogical(e) {
+  const r = cv.getBoundingClientRect();
+  return { x: (e.clientX - r.left) * W / r.width, y: (e.clientY - r.top) * H / r.height };
+}
+function jellyAt(x, y) {
+  const refs = [];
+  for (let i = 0; i < GRID_N; i++) refs.push({ zone: "grid", i });
+  for (let i = 0; i < S.bench.length; i++) refs.push({ zone: "bench", i });
+  for (const r of refs) { const p = refPos(r); if (Math.hypot(x - p.x, y - p.y + 4) < p.r + 12) return r; }
+  return null;
+}
+function benchSlotAt(x, y) {
+  for (let i = 0; i < S.bench.length; i++) if (Math.abs(x - BENCH_X[i]) < 34 && Math.abs(y - BENCH_Y) < 36) return i;
+  return -1;
+}
+function boosterAt(x, y) {
+  for (const k in BOOST) if (Math.hypot(x - BOOST[k].x, y - BOOST[k].y) < 28) return k;
+  return null;
+}
+const sameRef = (a, b) => a && b && a.zone === b.zone && a.i === b.i;
+
+cv.addEventListener("pointerdown", e => {
+  if (!S || S.status !== "play") return;
+  cv.setPointerCapture(e.pointerId);
+  const p = toLogical(e);
+  const b = boosterAt(p.x, p.y);
+  if (b) {
+    if (S.boosters[b] <= 0) { S.boosters[b]++; float(BOOST[b].x + 30, BOOST[b].y - 40, "+1 (ad)", "#ffd257", 20); return; }
+    if (b === "freeze") doAction({ type: "freeze" });
+    else { view.hammerArmed = !view.hammerArmed; view.sel = null; if (view.hammerArmed) showTip("Tap a lane to smash its front enemy."); else hideTip(); }
+    return;
+  }
+  if (view.hammerArmed) {
+    const l = laneAt(p.x, p.y);
+    if (l >= 0) doAction({ type: "hammer", lane: l }); else { view.hammerArmed = false; hideTip(); }
+    return;
+  }
+  const r = jellyAt(p.x, p.y);
+  if (r && getJ(S, r)) { view.drag = { src: r, x0: p.x, y0: p.y, x: p.x, y: p.y, moved: false }; return; }
+  // taps on non-jelly targets while something is selected
+  if (view.sel) {
+    const slot = benchSlotAt(p.x, p.y);
+    if (slot >= 0 && !S.bench[slot]) { doAction({ type: "park", src: view.sel, slot }); return; }
+    const l = laneAt(p.x, p.y);
+    if (l >= 0) { doAction({ type: "fire", src: view.sel, lane: l }); return; }
+    view.sel = null;
+  }
+});
+cv.addEventListener("pointermove", e => {
+  const d = view.drag; if (!d) return;
+  const p = toLogical(e); d.x = p.x; d.y = p.y;
+  if (Math.hypot(d.x - d.x0, d.y - d.y0) > 9) d.moved = true;
+});
+cv.addEventListener("pointerup", e => {
+  const d = view.drag; view.drag = null; if (!d) return;
+  const p = toLogical(e);
+  if (d.moved) {
+    const r = jellyAt(p.x, p.y);
+    if (r && !sameRef(r, d.src) && getJ(S, r)) return doAction({ type: "merge", src: d.src, dst: r });
+    const slot = benchSlotAt(p.x, p.y);
+    if (slot >= 0 && !S.bench[slot] && d.src.zone === "grid") return doAction({ type: "park", src: d.src, slot });
+    const l = laneAt(p.x, p.y);
+    if (l >= 0) return doAction({ type: "fire", src: d.src, lane: l });
+    return;
+  }
+  // tap
+  if (sameRef(view.sel, d.src)) { view.sel = null; return; }
+  if (view.sel) {
+    const a = getJ(S, view.sel), b = getJ(S, d.src);
+    if (a && b && (a.color === b.color || a.color === "W" || b.color === "W")) return doAction({ type: "merge", src: view.sel, dst: d.src });
+  }
+  view.sel = d.src; view.squish.set(getJ(S, d.src).id, now());
+});
+cv.addEventListener("pointercancel", () => (view.drag = null));
+
+document.getElementById("btnRestart").onclick = () => S && startLevel(S.levelIdx);
+document.getElementById("btnMenu").onclick = openTitle;
+window.addEventListener("keydown", e => {
+  if (e.key === "d" || e.key === "D") { view.debug = !view.debug; renderDebug(); }
+});
+function renderDebug() {
+  const el = document.getElementById("debug");
+  el.hidden = !view.debug;
+  if (!view.debug || !S) return;
+  const q = S.queue.slice(S.qpos).map(j => j.color + j.value).join(" ");
+  el.innerHTML = `DEBUG (D to close)
+level ${S.levelIdx + 1}: ${LEVELS[S.levelIdx].name}
+steps ${S.steps}  actions ${S.actions}  freeze ${S.freeze}
+boosters F${S.boosters.freeze} H${S.boosters.hammer}
+queue left: ${q || "-"}
+<span id="botOut">bot: not run</span>
+<button id="botBtn">Run solver + 400 bot games</button>`;
+  el.querySelector("#botBtn").onclick = () => {
+    const out = el.querySelector("#botOut"); out.textContent = "bot: running...";
+    setTimeout(() => { const sv = solve(S.levelIdx); const wr = botWinRate(S.levelIdx); out.textContent = `solver: ${sv.solvable ? "win found" : "no win found"} (${sv.nodes} nodes)\nrandom-bot win rate: ${(wr * 100).toFixed(0)}%`; }, 30);
+  };
+}
+
+// ---------------------------------------------------------------- RENDER
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+function drawBackground() {
+  // sky
+  let g = ctx.createLinearGradient(0, 0, 0, FAR_Y + 40);
+  g.addColorStop(0, "#7fd3ff"); g.addColorStop(1, "#ffe2b8");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, FAR_Y + 40);
+  // far hills
+  ctx.fillStyle = "#9bd88a";
+  ctx.beginPath(); ctx.moveTo(0, FAR_Y + 10);
+  for (let x = 0; x <= W; x += 30) ctx.lineTo(x, FAR_Y - 6 - 14 * Math.sin(x * 0.02 + 1) - 8 * Math.sin(x * 0.05));
+  ctx.lineTo(W, FAR_Y + 40); ctx.lineTo(0, FAR_Y + 40); ctx.fill();
+  // meadow
+  g = ctx.createLinearGradient(0, FAR_Y, 0, WALL_Y + 20);
+  g.addColorStop(0, "#7cc96a"); g.addColorStop(1, "#4fae55");
+  ctx.fillStyle = g; ctx.fillRect(0, FAR_Y - 2, W, WALL_Y + 30 - FAR_Y);
+  // road rows
+  for (let d = TRACK + 1; d > 0; d--) {
+    const a = laneGeom(0, d), b = laneGeom(0, d - 1);
+    ctx.fillStyle = d % 2 ? "#f1d6a4" : "#e8c78f";
+    ctx.beginPath();
+    ctx.moveTo(W / 2 - a.half, a.y); ctx.lineTo(W / 2 + a.half, a.y);
+    ctx.lineTo(W / 2 + b.half, b.y); ctx.lineTo(W / 2 - b.half, b.y); ctx.fill();
+  }
+  // lane dividers
+  ctx.strokeStyle = "rgba(160,110,60,.35)"; ctx.lineWidth = 2;
+  for (let k = 0; k <= 4; k++) {
+    const a = laneGeom(0, TRACK + 1), b = laneGeom(0, 0);
+    ctx.beginPath();
+    ctx.moveTo(W / 2 - a.half + a.lw * k, a.y); ctx.lineTo(W / 2 - b.half + b.lw * k, b.y); ctx.stroke();
+  }
+  // lane highlight while aiming
+  const aim = currentAim();
+  for (let l = 0; l < 4; l++) {
+    let col = null;
+    if (aim && aim.kind === "jelly") {
+      const v = validate(S, { type: "fire", src: aim.src, lane: l });
+      const jj = getJ(S, aim.src);
+      const tint = jj && jj.color !== "W" ? COLORS[jj.color].fill : "#ffffff";
+      if (v.ok) col = tint + "55";
+      if (aim.hoverLane === l) col = v.ok ? tint + "99" : "rgba(255,70,80,.3)";
+    } else if (aim && aim.kind === "hammer" && S.lanes[l].length) col = "rgba(255,210,87,.35)";
+    if (!col) continue;
+    const a = laneGeom(l, TRACK + 1), b = laneGeom(l, 0);
+    ctx.fillStyle = col; ctx.beginPath();
+    ctx.moveTo(a.x - a.lw / 2, a.y); ctx.lineTo(a.x + a.lw / 2, a.y); ctx.lineTo(b.x + b.lw / 2, b.y); ctx.lineTo(b.x - b.lw / 2, b.y); ctx.fill();
+  }
+  // wall
+  const flash = now() - view.wallFlash < 600;
+  ctx.fillStyle = flash ? "#ff5a5f" : "#9a6a3f"; ctx.fillRect(0, WALL_Y - 6, W, 22);
+  ctx.fillStyle = flash ? "#ffb3b0" : "#b98552";
+  for (let x = 6; x < W; x += 36) { rr(x, WALL_Y - 16, 28, 20, 5); ctx.fill(); }
+  // lower tray
+  g = ctx.createLinearGradient(0, WALL_Y + 16, 0, H);
+  g.addColorStop(0, "#5a4a7a"); g.addColorStop(1, "#3b3158");
+  ctx.fillStyle = g; ctx.fillRect(0, WALL_Y + 16, W, H - WALL_Y - 16);
+}
+function currentAim() {
+  if (view.hammerArmed) return { kind: "hammer" };
+  const d = view.drag;
+  if (d && d.moved) return { kind: "jelly", src: d.src, hoverLane: laneAt(d.x, d.y) };
+  if (view.sel) return { kind: "jelly", src: view.sel, hoverLane: -1 };
+  return null;
+}
+
+function drawEnemy(e, rd, alpha = 1) {
+  const g = laneGeom(e.lane, rd);
+  const base = (e.boss ? 116 : 74) * g.s;
+  const c = COLORS[e.color];
+  const x = g.x, y = g.y;
+  const bob = Math.sin(view.time / 180 + e.id) * 2 * g.s;
+  ctx.save(); ctx.globalAlpha = alpha;
+  // shadow
+  ctx.fillStyle = "rgba(0,0,0,.18)"; ctx.beginPath(); ctx.ellipse(x, y, base * .55, base * .16, 0, 0, 7); ctx.fill();
+  const w = base, h = base * .95, top = y - h - 4 * g.s + bob;
+  // legs
+  ctx.fillStyle = c.dark; rr(x - w * .34, y - h * .22, w * .22, h * .24, 4 * g.s); ctx.fill(); rr(x + w * .12, y - h * .22, w * .22, h * .24, 4 * g.s); ctx.fill();
+  // body
+  const gr = ctx.createLinearGradient(0, top, 0, top + h);
+  gr.addColorStop(0, c.light); gr.addColorStop(.25, c.fill); gr.addColorStop(1, c.dark);
+  ctx.fillStyle = gr; rr(x - w / 2, top, w, h * .82, 12 * g.s); ctx.fill();
+  if (e.boss) { // horns + spikes
+    ctx.fillStyle = c.dark;
+    ctx.beginPath(); ctx.moveTo(x - w * .42, top + 6); ctx.lineTo(x - w * .52, top - h * .28); ctx.lineTo(x - w * .22, top + 4); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(x + w * .42, top + 6); ctx.lineTo(x + w * .52, top - h * .28); ctx.lineTo(x + w * .22, top + 4); ctx.fill();
+  }
+  if (e.armor) { // helmet band
+    ctx.fillStyle = "#8d99a8"; rr(x - w / 2 - 2, top - 2, w + 4, h * .24, 10 * g.s); ctx.fill();
+    ctx.fillStyle = "#c3ccd6"; rr(x - w / 2 + 3, top + 1, w - 6, h * .08, 6 * g.s); ctx.fill();
+  }
+  // gloss
+  ctx.fillStyle = "rgba(255,255,255,.35)"; rr(x - w * .38, top + h * (e.armor ? .28 : .08), w * .28, h * .12, 6 * g.s); ctx.fill();
+  // eyes
+  const ey = top + h * (e.armor ? .42 : .34);
+  for (const sx of [-1, 1]) {
+    ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.ellipse(x + sx * w * .18, ey, w * .1, w * .09, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = "#1c2230"; ctx.beginPath(); ctx.arc(x + sx * w * .16, ey + w * .02, w * .045, 0, 7); ctx.fill();
+    ctx.strokeStyle = "#1c2230"; ctx.lineWidth = Math.max(2, 4 * g.s); ctx.beginPath();
+    ctx.moveTo(x + sx * w * .3, ey - w * .12); ctx.lineTo(x + sx * w * .07, ey - w * .06); ctx.stroke();
+  }
+  // mouth
+  ctx.fillStyle = "#1c2230"; rr(x - w * .14, ey + w * .15, w * .28, w * .07, 3 * g.s); ctx.fill();
+  // shape icon
+  drawShape(e.color, x, top + h * .72, 7 * g.s, "rgba(255,255,255,.75)");
+  // hp pill
+  const hp = Math.round(view.disp.get(e.id) ?? e.hp);
+  const fs = Math.max(13, (e.boss ? 34 : 26) * g.s);
+  ctx.font = `700 ${fs}px Fredoka, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  const tw = ctx.measureText(hp).width;
+  const py = top - fs * .75 - (e.boss ? h * .12 : 0);
+  ctx.fillStyle = "rgba(20,26,40,.78)"; rr(x - tw / 2 - 8 * g.s, py - fs * .6, tw + 16 * g.s, fs * 1.2, fs * .6); ctx.fill();
+  ctx.fillStyle = "#fff"; ctx.fillText(hp, x, py + 1);
+  if (e.armor) {
+    const bx = x + w * .52, by = top + h * .05;
+    ctx.fillStyle = "#5d6b7c"; ctx.beginPath();
+    ctx.moveTo(bx, by - 13 * g.s); ctx.lineTo(bx + 12 * g.s, by - 8 * g.s); ctx.lineTo(bx + 10 * g.s, by + 8 * g.s); ctx.lineTo(bx, by + 14 * g.s); ctx.lineTo(bx - 10 * g.s, by + 8 * g.s); ctx.lineTo(bx - 12 * g.s, by - 8 * g.s); ctx.fill();
+    ctx.fillStyle = "#fff"; ctx.font = `700 ${Math.max(10, 13 * g.s)}px Fredoka, sans-serif`; ctx.fillText(e.armor, bx, by + 1);
+  }
+  if (view.debug) { ctx.fillStyle = "#000"; ctx.font = "12px monospace"; ctx.fillText("d" + e.dist, x, y + 10); }
+  ctx.restore();
+}
+
+function drawShape(color, x, y, r, fill) {
+  ctx.fillStyle = fill; ctx.beginPath();
+  if (color === "R") ctx.arc(x, y, r, 0, 7);
+  else if (color === "B") ctx.rect(x - r * .9, y - r * .9, r * 1.8, r * 1.8);
+  else if (color === "G") { ctx.moveTo(x, y - r * 1.1); ctx.lineTo(x + r, y + r * .8); ctx.lineTo(x - r, y + r * .8); }
+  else if (color === "Y") { ctx.moveTo(x, y - r * 1.15); ctx.lineTo(x + r, y); ctx.lineTo(x, y + r * 1.15); ctx.lineTo(x - r, y); }
+  else { for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, rr2 = k % 2 ? r * .45 : r * 1.1; ctx.lineTo(x + Math.cos(a) * rr2, y + Math.sin(a) * rr2); } }
+  ctx.closePath(); ctx.fill();
+}
+
+function jellyFill(color, x, y, r) {
+  if (color === "W") {
+    const g = ctx.createLinearGradient(x - r, y - r, x + r, y + r);
+    ["#ff5a5f", "#ffc933", "#3ecf6e", "#3d8bff", "#b36bff"].forEach((c, i) => g.addColorStop(i / 4, c));
+    return g;
+  }
+  const c = COLORS[color];
+  const g = ctx.createRadialGradient(x - r * .35, y - r * .5, r * .1, x, y, r * 1.3);
+  g.addColorStop(0, c.light); g.addColorStop(.45, c.fill); g.addColorStop(1, c.dark);
+  return g;
+}
+function drawJelly(j, x, y, r, opts = {}) {
+  const t = now();
+  let sx = 1, sy = 1;
+  const sq = view.squish.get(j.id);
+  if (sq && t - sq < 450) { const k = (t - sq) / 450; const a = Math.sin(k * Math.PI * 3) * (1 - k) * .18; sx = 1 + a; sy = 1 - a; }
+  const sh = view.shake.get(j.id);
+  if (sh && t - sh < 350) x += Math.sin((t - sh) / 25) * 6 * (1 - (t - sh) / 350);
+  sy *= 1 + Math.sin(view.time / 260 + j.id) * .02;
+  ctx.save(); ctx.translate(x, y); ctx.scale(sx * (opts.scale || 1), sy * (opts.scale || 1)); ctx.globalAlpha = opts.alpha ?? 1;
+  // shadow
+  ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.beginPath(); ctx.ellipse(0, r * .78, r * .9, r * .2, 0, 0, 7); ctx.fill();
+  if (opts.glow) { ctx.shadowColor = "#fff"; ctx.shadowBlur = 22; }
+  ctx.beginPath();
+  ctx.moveTo(-r, 0);
+  ctx.bezierCurveTo(-r, -r * 1.3, r, -r * 1.3, r, 0);
+  ctx.bezierCurveTo(r * 1.08, r * .55, r * .75, r * .78, r * .38, r * .72);
+  ctx.quadraticCurveTo(0, r * .86, -r * .38, r * .72);
+  ctx.bezierCurveTo(-r * .75, r * .78, -r * 1.08, r * .55, -r, 0);
+  ctx.fillStyle = jellyFill(j.color, 0, 0, r); ctx.fill();
+  ctx.shadowBlur = 0;
+  if (opts.glow) { ctx.lineWidth = 4; ctx.strokeStyle = "#fff"; ctx.stroke(); }
+  // arms
+  ctx.fillStyle = j.color === "W" ? "#b36bff" : COLORS[j.color].fill;
+  ctx.beginPath(); ctx.ellipse(-r * 1.02, r * .15, r * .22, r * .13, -.5, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(r * 1.02, r * .15, r * .22, r * .13, .5, 0, 7); ctx.fill();
+  // gloss
+  ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.beginPath(); ctx.ellipse(-r * .42, -r * .58, r * .22, r * .12, -.6, 0, 7); ctx.fill();
+  // number
+  const fs = r * (j.value >= 100 ? .78 : .92);
+  ctx.font = `700 ${fs}px Fredoka, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.lineWidth = r * .16; ctx.strokeStyle = "rgba(20,26,40,.85)"; ctx.lineJoin = "round";
+  ctx.strokeText(j.value, 0, -r * .12); ctx.fillStyle = "#fff"; ctx.fillText(j.value, 0, -r * .12);
+  drawShape(j.color, 0, r * .48, r * .13, "rgba(255,255,255,.8)");
+  ctx.restore();
+}
+
+function drawTray() {
+  // bench
+  ctx.font = "600 13px Fredoka, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.fillText("BENCH", BENCH_X[1] + (S.bench.length - 3) * 37, BENCH_Y - 46 + 0);
+  for (let i = 0; i < S.bench.length; i++) {
+    const x = BENCH_X[i];
+    ctx.fillStyle = "#c98e55"; rr(x - 32, BENCH_Y - 4, 64, 34, 10); ctx.fill();
+    ctx.fillStyle = "#e3a96b"; rr(x - 32, BENCH_Y - 10, 64, 26, 10); ctx.fill();
+    const hi = currentAim() && currentAim().kind === "jelly" && currentAim().src.zone === "grid" && !S.bench[i];
+    if (hi) { ctx.strokeStyle = "rgba(255,255,255,.8)"; ctx.lineWidth = 3; ctx.setLineDash([6, 5]); rr(x - 32, BENCH_Y - 10, 64, 40, 10); ctx.stroke(); ctx.setLineDash([]); }
+  }
+  // boosters
+  for (const k in BOOST) {
+    const b = BOOST[k], n = S.boosters[k];
+    ctx.fillStyle = k === "freeze" ? "#2f8fd6" : "#e0892a";
+    if (k === "hammer" && view.hammerArmed) { ctx.shadowColor = "#ffd257"; ctx.shadowBlur = 18; }
+    ctx.beginPath(); ctx.arc(b.x, b.y, 25, 0, 7); ctx.fill(); ctx.shadowBlur = 0;
+    ctx.fillStyle = "#fff"; ctx.font = "26px sans-serif";
+    ctx.fillText(k === "freeze" ? "❄" : "\u{1F528}", b.x, b.y + 1);
+    ctx.fillStyle = n ? "#3ecf6e" : "#ffb020"; ctx.beginPath(); ctx.arc(b.x + 18, b.y - 18, 10, 0, 7); ctx.fill();
+    ctx.fillStyle = "#fff"; ctx.font = "700 12px Fredoka, sans-serif"; ctx.fillText(n ? n : "+", b.x + 18, b.y - 17);
+  }
+  // queue preview
+  ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.font = "600 13px Fredoka, sans-serif";
+  ctx.fillText("NEXT", QUEUE_X + 18, BENCH_Y - 46);
+  const nxt = S.queue.slice(S.qpos, S.qpos + 3);
+  nxt.forEach((j, k) => {
+    const x = QUEUE_X + 18, y = BENCH_Y - 18 + k * 26;
+    ctx.fillStyle = j.color === "W" ? jellyFill("W", x, y, 14) : COLORS[j.color].fill;
+    rr(x - 26, y - 11, 52, 22, 11); ctx.fill();
+    ctx.fillStyle = "#fff"; ctx.font = "700 14px Fredoka, sans-serif"; ctx.fillText(j.value, x, y + 1);
+  });
+  if (!nxt.length) { ctx.fillStyle = "rgba(255,255,255,.35)"; ctx.font = "600 12px Fredoka"; ctx.fillText("empty", QUEUE_X + 18, BENCH_Y - 10); }
+  // grid slots
+  for (let i = 0; i < GRID_N; i++) {
+    const p = refPos({ zone: "grid", i });
+    ctx.fillStyle = "rgba(255,255,255,.07)"; ctx.beginPath(); ctx.ellipse(p.x, p.y + 26, 44, 13, 0, 0, 7); ctx.fill();
+  }
+  // jellies
+  const d = view.drag;
+  const drawRef = r => {
+    const j = getJ(S, r); if (!j) return;
+    const p = refPos(r);
+    if (d && d.moved && sameRef(d.src, r)) { drawJelly(j, p.x, p.y, p.r, { alpha: .25 }); return; }
+    const sel = sameRef(view.sel, r);
+    // merge target highlight
+    const aim = currentAim();
+    let glow = sel;
+    if (aim && aim.kind === "jelly" && !sameRef(aim.src, r)) {
+      const v = validate(S, { type: "merge", src: aim.src, dst: r });
+      if (v.ok) { ctx.strokeStyle = "rgba(255,255,255,.6)"; ctx.lineWidth = 3; ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 10, 0, 7); ctx.stroke(); ctx.setLineDash([]); }
+    }
+    drawJelly(j, p.x, p.y - (sel ? 8 : 0), p.r, { glow, scale: sel ? 1.08 : 1 });
+  };
+  for (let i = 0; i < S.bench.length; i++) drawRef({ zone: "bench", i });
+  for (let i = 0; i < GRID_N; i++) drawRef({ zone: "grid", i });
+  if (d && d.moved) { const j = getJ(S, d.src); if (j) drawJelly(j, d.x, d.y - 20, 34, { scale: 1.05 }); }
+}
+
+function frame(ts) {
+  view.time = ts;
+  const dpr = cv.width / W;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  if (!S) { requestAnimationFrame(frame); return; }
+  drawBackground();
+  // lerp render distances
+  const moving = ts > view.holdUntil;
+  const all = [];
+  for (const l of S.lanes) for (const e of l) {
+    let rd = view.rd.get(e.id); if (rd === undefined) rd = e.dist;
+    if (moving) rd += (e.dist - rd) * 0.16;
+    view.rd.set(e.id, rd);
+    if (!view.disp.has(e.id)) view.disp.set(e.id, e.hp);
+    all.push({ e, rd });
+  }
+  view.ghosts = view.ghosts.filter(g => ts < g.until + 10);
+  for (const gh of view.ghosts) all.push({ e: gh.e, rd: gh.rd, ghost: true });
+  all.sort((a, b) => b.rd - a.rd);
+  for (const it of all) drawEnemy(it.e, it.rd);
+  drawTray();
+  // shots
+  view.shots = view.shots.filter(s => ts < s.t0 + s.dur);
+  for (const s of view.shots) {
+    const k = Math.min(1, (ts - s.t0) / s.dur);
+    const x = s.from.x + (s.to.x - s.from.x) * k;
+    const y = s.from.y + (s.to.y - s.from.y) * k - Math.sin(k * Math.PI) * (s.merge ? 30 : 60);
+    const r = s.merge ? 30 : 30 * (1 - k * .55);
+    drawJelly({ id: -1, color: s.jcolor, value: s.value }, x, y, r);
+  }
+  // particles
+  view.particles = view.particles.filter(p => ts - p.t0 < p.life);
+  for (const p of view.particles) {
+    const k = (ts - p.t0) / p.life;
+    p.x += p.vx; p.y += p.vy; p.vy += 0.25;
+    ctx.globalAlpha = 1 - k; ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.size * (1 - k * .5), 0, 7); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  // floating texts
+  view.texts = view.texts.filter(t => ts - t.t0 < t.life);
+  for (const t of view.texts) {
+    const k = (ts - t.t0) / t.life;
+    ctx.globalAlpha = k < .75 ? 1 : 1 - (k - .75) / .25;
+    const sc = k < .15 ? .6 + k / .15 * .4 : 1;
+    ctx.font = `700 ${t.size * sc}px Fredoka, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.lineWidth = t.size * .18; ctx.strokeStyle = "rgba(20,26,40,.85)"; ctx.lineJoin = "round";
+    ctx.strokeText(t.text, t.x, t.y - k * 40); ctx.fillStyle = t.color; ctx.fillText(t.text, t.x, t.y - k * 40);
+  }
+  ctx.globalAlpha = 1;
+  if (view.debug && Math.floor(ts / 250) !== view._dbgTick) { view._dbgTick = Math.floor(ts / 250); if (!document.querySelector("#botOut")?.textContent.startsWith("solv")) renderDebug(); }
+  requestAnimationFrame(frame);
+}
+
+// expose for testing / tuning
+window.MS = { LEVELS, newState, apply, listActions, validate, solve, botWinRate, get S() { return S; }, startLevel, doAction };
+
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+S = newState(0); // background scene behind the title card
+const boot = () => { openTitle(); requestAnimationFrame(frame); };
+if (document.fonts && document.fonts.load) Promise.race([document.fonts.load("700 20px Fredoka"), new Promise(r => setTimeout(r, 1500))]).then(boot, boot);
+else boot();
+</script>
+
+</body></html>

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hybrid Casual Prototypes</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap">
+<style>
+  :root { --bg:#1d2a3a; --card:#fff; --ink:#24344b; --soft:#56698a; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; background:radial-gradient(circle at 50% 20%,#2c4058,#1d2a3a 70%); color:#fff;
+         font-family:"Fredoka",system-ui,sans-serif; padding:48px 16px; }
+  main { max-width:900px; margin:0 auto; }
+  h1 { font-size:clamp(32px,6vw,52px); margin:0 0 8px; }
+  .lead { color:#c8d6e8; font-size:18px; margin:0 0 36px; max-width:640px; line-height:1.4; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:20px; }
+  a.card { display:block; background:var(--card); color:var(--ink); text-decoration:none; border-radius:24px; padding:24px;
+           box-shadow:0 8px 0 rgba(0,0,0,.25); transition:transform .15s; }
+  a.card:hover { transform:translateY(-4px); }
+  .tag { display:inline-block; font-size:13px; font-weight:600; padding:3px 10px; border-radius:99px; color:#fff; margin-bottom:10px; }
+  h2 { margin:0 0 8px; font-size:28px; }
+  p { margin:0 0 14px; color:var(--soft); line-height:1.45; }
+  .play { font-weight:700; }
+  footer { margin-top:40px; color:#8ea3bf; font-size:14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Hybrid Casual Prototypes</h1>
+  <p class="lead">Playable prototypes that test twists on merge mechanics. Each one is built to answer a specific design question before committing to production.</p>
+  <div class="grid">
+    <a class="card" href="merge-siege/">
+      <span class="tag" style="background:#ff5a5f">Portrait · 8 levels</span>
+      <h2>Merge Siege</h2>
+      <p>Turn-based lane merge. Merge numbered jellies and fire them into color-matched lanes before enemies breach the wall. Exact kills are free moves; leftover damage pierces.</p>
+      <span class="play" style="color:#3d8bff">Play &rarr;</span>
+    </a>
+    <a class="card" href="pocket-find/">
+      <span class="tag" style="background:#2bb3a3">Landscape · 3D</span>
+      <h2>Pocket Find: Lunch Rush</h2>
+      <p>Hidden object meets in-scene merging in a 3D dollhouse fast-food restaurant. Find tools, and combine ingredients right in the room to cook the dishes on your order cards.</p>
+      <span class="play" style="color:#e8483b">Play &rarr;</span>
+    </a>
+  </div>
+  <footer>Designed by Payal. Prototypes built in plain HTML, CSS and JavaScript.</footer>
+</main>
+</body>
+</html>
